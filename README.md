@@ -5,6 +5,19 @@ Członkowie zespołu:
 - Jakub Ptasznik
 - Patryk Bandyra
 
+Treść zadania
+------------
+“Są osoby, które wchodzą na naszą stronę i nie mogą się zdecydować, którym produktom przyjrzeć się nieco lepiej. 
+Może dało by się im coś polecić?"
+
+Etap 1 (03.12.2021) (20pkt)
+------------
+- definicja problemu biznesowego, zdefiniowanie zadania/zadań modelowania i 
+wszystkich założeń, zaproponowania kryteriów sukcesu
+- analiza danych z perspektywy realizacji tych zadań
+(trzeba ocenić, czy dostarczone dane są wystarczające – może czegoś brakuje, 
+może coś trzeba poprawić, domagać się innych danych, ...)
+
 Project Organization
 ------------
 
