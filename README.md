@@ -7,8 +7,8 @@ Członkowie zespołu:
 
 Treść zadania
 ------------
-“Są osoby, które wchodzą na naszą stronę i nie mogą się zdecydować, którym produktom przyjrzeć się nieco lepiej. 
-Może dało by się im coś polecić?"
+”Są osoby, które wchodzą na naszą stronę i nie mogą się zdecydować, którym produktom przyjrzeć się nieco lepiej. 
+Może dałoby się im coś polecić?"
 
 Etap 1 (03.12.2021) (20pkt)
 ------------
