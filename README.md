@@ -5,7 +5,7 @@ Członkowie zespołu:
 - Jakub Ptasznik
 - Patryk Bandyra
 
-Treść zadania
+Treść zadania (Zadanie 2 wariant 1)
 ------------
 ”Są osoby, które wchodzą na naszą stronę i nie mogą się zdecydować, którym produktom przyjrzeć się nieco lepiej. 
 Może dałoby się im coś polecić?"
