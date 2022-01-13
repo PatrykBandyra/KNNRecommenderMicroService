@@ -20,7 +20,7 @@ def get_simple_recommendation(request, product_id):
                 'product_name': str(product['product_name']),
                 'category_name': str(product['category_name']),
                 'price': float(product['original_price']),
-                'user_rating': float(product['user_rating']),
+                'user_rating': float(product['original_user_rating']),
                 'distance': float(neighbour[1])
             }
 
@@ -45,7 +45,7 @@ def get_more_advanced_recommendation(request, user_id):
                 'product_name': str(product['product_name']),
                 'category_name': str(product['category_name']),
                 'price': float(product['original_price']),
-                'user_rating': float(product['user_rating']),
+                'user_rating': float(product['original_user_rating']),
                 'distance': float(neighbour[1])
             }
 
