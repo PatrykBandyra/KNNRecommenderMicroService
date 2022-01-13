@@ -1,6 +1,8 @@
 import pandas as pd
 import operator
 from scipy import spatial
+import pickle
+import os
 
 
 class AbstractRecommender:
@@ -83,12 +85,30 @@ class SimpleRecommender(AbstractRecommender):
 
 
 class AdvancedRecommender(AbstractRecommender):
+
+    filepath = os.path.join(os.path.dirname(__file__), 'all_distances.pk')
+
     def __init__(self):
         super().__init__()
+        if os.path.exists(AdvancedRecommender.filepath):
+            self.all_distances = self.load_all_distances()
+        else:
+            self.all_distances = self.get_all_distances()
+            self.save_all_distances()
 
-        self.all_distances = []
+    def get_all_distances(self):
+        all_distances = []
         for i in range(len(self.products)):
-            self.all_distances.append(self.get_distances(self.products['product_id'].iloc[i]))
+            all_distances.append(self.get_distances(self.products['product_id'].iloc[i]))
+        return all_distances
+
+    def save_all_distances(self):
+        with open(AdvancedRecommender.filepath, 'wb') as f:
+            pickle.dump(self.all_distances, f)
+
+    def load_all_distances(self):
+        with open(AdvancedRecommender.filepath, 'rb') as f:
+            return pickle.load(f)
 
     def get_distances(self, product_id):
         p = self.products.index[self.products['product_id'] == product_id][0]
@@ -129,3 +149,6 @@ class AdvancedRecommender(AbstractRecommender):
 
         return self.get_neighbours(distances, K)
 
+
+def on_server_start():
+    AdvancedRecommender()

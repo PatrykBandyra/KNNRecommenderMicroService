@@ -9,3 +9,5 @@ urlpatterns = [
     path('recommendations/advanced/<int:user_id>/', views.get_more_advanced_recommendation,
          name='more_advanced_recommendation'),
 ]
+
+utils.on_server_start()
