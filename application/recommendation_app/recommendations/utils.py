@@ -391,13 +391,13 @@ class ExperimentAB:
         self.content_df = self.content_df.rename(
             columns={'level_0': 'user_id', 'level_1': 'product_id', 0: 'predicted_interaction'})
 
-    def get_recommendationB(self, content_df, user_id, dataset, K):
-        s = dataset.index[dataset['user_id'] == user_id].tolist()
+    def get_recommendationB(self, user_id, K):
+        s = self.trainsetB.index[self.trainsetB['user_id'] == user_id].tolist()
         ids = []
         for i in s:
-            ids.append(dataset['product_id'].iloc[i])
+            ids.append(self.trainsetB['product_id'].iloc[i])
 
-        user_content_df = content_df.loc[content_df['user_id'] == user_id]
+        user_content_df = self.content_df.loc[self.content_df['user_id'] == user_id]
 
         mini = user_content_df['predicted_interaction'].min()
         for id in ids:
@@ -414,7 +414,7 @@ class ExperimentAB:
         correct = 0
         for index, user in self.test_users.iterrows():
             print(user['user_id'])
-            recommendations = self.get_recommendationB(self.content_df, user['user_id'], self.trainsetB, 5)
+            recommendations = self.get_recommendationB(user['user_id'], 5)
             for recommendation in recommendations:
                 view = self.testsetB[(self.testsetB['product_id'] == recommendation) &
                                      (self.testsetB['user_id'] == user['user_id'])]['user_view']
@@ -463,7 +463,7 @@ class ExperimentAB:
     def get_accuracy_A(self):
         correct = 0
         for index, user in self.test_users.iterrows():
-            recommendations = self.get_recommendationA(user['user_id'], self.trainsetA, 5, self.all_distances)
+            recommendations = self.get_recommendationA(user['user_id'], 5)
             for recommendation in recommendations:
                 id = self.products.iloc[recommendation[0]]['product_id']
                 view = self.testsetA[(self.testsetA['product_id'] == id) &
@@ -474,20 +474,21 @@ class ExperimentAB:
                         correct = correct + 1
         return correct / (5 * len(self.test_users))
 
-    def get_recommendationA(self, user_id, dataset, K, all_distances):
-        s = dataset.index[dataset['user_id'] == user_id].tolist()
+    def get_recommendationA(self, user_id, K):
+        s = self.trainsetA.index[self.trainsetA['user_id'] == user_id].tolist()
         ids = []
         for i in s:
-            ids.append(dataset['product_id'].iloc[i])
+            ids.append(self.trainsetA['product_id'].iloc[i])
 
         distances = [0] * len(self.products)
         for id in ids:
             i = self.products.index[self.products['product_id'] == id][0]
-            score = dataset.loc[(dataset['user_id'] == user_id) & (dataset['product_id'] == id), 'score']
+            score = self.trainsetA.loc[(self.trainsetA['user_id'] == user_id) & (self.trainsetA['product_id'] == id),
+                                       'score']
             if len(score) != 0:
                 score = score.item()
                 for p in range(len(self.products)):
-                    distances[p] = distances[p] + all_distances[i][p] * score
+                    distances[p] = distances[p] + self.all_distances[i][p] * score
 
         maxi = max(distances)
         for id in ids:
