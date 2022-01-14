@@ -259,6 +259,25 @@ class TheBestRecommender:
         else:
             return 5
 
+    def get_recommendation(self, user_id, K):
+        s = self.sessions.index[self.sessions['user_id'] == user_id].tolist()
+        ids = []
+        for i in s:
+            ids.append(self.sessions['product_id'].iloc[i])
+
+        user_content_df = self.content_df.loc[self.content_df['user_id'] == user_id]
+
+        mini = user_content_df['predicted_interaction'].min()
+        for id in ids:
+            user_content_df.loc[user_content_df['product_id'] == id, 'predicted_interaction'] = mini
+
+        user_content_df = user_content_df.sort_values(by="predicted_interaction", ascending=False)
+
+        recommendations = []
+        for x in range(K):
+            recommendations.append(user_content_df['product_id'].iloc[x])
+        return recommendations
+
 
 def on_server_start():
     AdvancedRecommender()
