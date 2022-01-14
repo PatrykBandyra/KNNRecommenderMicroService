@@ -3,6 +3,11 @@ import operator
 from scipy import spatial
 import pickle
 import os
+import numpy as np
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import MinMaxScaler
 
 
 class AbstractRecommender:
@@ -85,7 +90,6 @@ class SimpleRecommender(AbstractRecommender):
 
 
 class AdvancedRecommender(AbstractRecommender):
-
     filepath = os.path.join(os.path.dirname(__file__), 'all_distances.pk')
 
     def __init__(self):
@@ -148,6 +152,112 @@ class AdvancedRecommender(AbstractRecommender):
             distances[id] = maxi
 
         return self.get_neighbours(distances, K)
+
+
+class TheBestRecommender:
+    def __init__(self):
+        self.users = pd.read_json("../../data/raw/users.jsonl", lines=True)
+        self.sessions = pd.read_json("../../data/raw/sessions.jsonl", lines=True)
+        self.products = pd.read_json("../../data/raw/products.jsonl", lines=True)
+
+        self.sessions['score'] = self.sessions['event_type'].map({'VIEW_PRODUCT': 5, 'BUY_PRODUCT': 5})
+
+        self.group = self.sessions.groupby(['user_id', 'product_id'])['score'].sum().reset_index()
+        self.group['score'] = self.group['score'].apply(lambda x: 5 if x > 5 else x)
+        self.group = pd.pivot_table(self.group, values='score', index='user_id', columns='product_id')
+        self.group = self.group.fillna(0)
+        self.group = self.group.stack().reset_index()
+        self.group = self.group.rename(columns={0: 'score'})
+        self.group['user_view'] = self.group['score'].apply(lambda x: 1 if x > 0 else 0)
+
+        std = MinMaxScaler(feature_range=(0, 1))
+        std.fit(self.group['score'].values.reshape(-1, 1))
+        self.group['interaction_score'] = std.transform(self.group['score'].values.reshape(-1, 1))
+
+        self.group = pd.merge(self.group, self.products, on="product_id", how="left")
+        self.group = pd.merge(self.group, self.users, on="user_id", how="left")
+        self.group = self.group[
+            ['user_id', 'product_id', 'product_name', 'category_path', 'price', 'user_rating', 'score',
+             'interaction_score', 'user_view']]
+        self.group['price'] = self.group['price'].apply(lambda x: TheBestRecommender.price_bin(x))
+        self.group['user_rating'] = self.group['user_rating'].apply(lambda x: TheBestRecommender.rating_bin(x))
+
+        self.matrix = pd.pivot_table(self.group, values='score', index='user_id', columns='product_id')
+        self.matrix = self.matrix.fillna(0)
+
+        self.product_cat = self.group[['product_id', 'category_path', 'price', 'user_rating']].drop_duplicates(
+            'product_id')
+        self.product_cat = self.product_cat.sort_values(by='product_id')
+
+        self.price_matrix = np.reciprocal(euclidean_distances(np.array(self.product_cat['price']).reshape(-1, 1)) + 1)
+        self.euclidean_matrix1 = pd.DataFrame(self.price_matrix, columns=self.product_cat['product_id'],
+                                              index=self.product_cat['product_id'])
+
+        self.rating_matrix = np.reciprocal(
+            euclidean_distances(np.array(self.product_cat['user_rating']).reshape(-1, 1)) + 1)
+        self.euclidean_matrix2 = pd.DataFrame(self.rating_matrix, columns=self.product_cat['product_id'],
+                                              index=self.product_cat['product_id'])
+
+        self.tfidf_vectorizer = TfidfVectorizer()
+        self.doc_term = self.tfidf_vectorizer.fit_transform(list(self.product_cat['category_path']))
+        self.dt_matrix = pd.DataFrame(self.doc_term.toarray().round(3),
+                                      index=[i for i in self.product_cat['product_id']],
+                                      columns=self.tfidf_vectorizer.get_feature_names())
+        self.cos_similar_matrix = pd.DataFrame(cosine_similarity(self.dt_matrix.values),
+                                               columns=self.product_cat['product_id'],
+                                               index=self.product_cat['product_id'])
+
+        self.similarity_matrix = self.euclidean_matrix1.multiply(self.euclidean_matrix2).multiply(
+            self.cos_similar_matrix)
+        self.content_matrix = self.matrix.dot(self.similarity_matrix)
+        self.std = MinMaxScaler(feature_range=(0, 1))
+        self.std.fit(self.content_matrix.values)
+        self.content_matrix = std.transform(self.content_matrix.values)
+        self.content_matrix = pd.DataFrame(self.content_matrix, columns=sorted(self.group['product_id'].unique()),
+                                           index=sorted(self.group['user_id'].unique()))
+
+        self.content_df = self.content_matrix.stack().reset_index()
+        self.content_df = self.content_df.rename(
+            columns={'level_0': 'user_id', 'level_1': 'product_id', 0: 'predicted_interaction'})
+
+        self.group = self.group.merge(self.content_df, on=['user_id', 'product_id'])
+        self.group['predicted_view'] = self.group['predicted_interaction'].apply(lambda x: 1 if x >= 0.5 else 0)
+
+    @staticmethod
+    def price_bin(price):
+        if price <= 25:
+            return 0
+        if price <= 50:
+            return 1
+        if price <= 100:
+            return 2
+        if price <= 250:
+            return 3
+        if price <= 500:
+            return 4
+        if price <= 1000:
+            return 5
+        if price <= 2000:
+            return 6
+        if price <= 4000:
+            return 7
+        else:
+            return 8
+
+    @staticmethod
+    def rating_bin(rating):
+        if rating <= 0.5:
+            return 0
+        if rating <= 1.5:
+            return 1
+        if rating <= 2.5:
+            return 2
+        if rating <= 3.5:
+            return 3
+        if rating <= 4.5:
+            return 4
+        else:
+            return 5
 
 
 def on_server_start():
