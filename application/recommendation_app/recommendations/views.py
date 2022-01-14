@@ -130,6 +130,9 @@ def get_ab_experiment_by_user_ids(request):
 
 @require_GET
 def get_ab_experiment(request):
+    """
+    Performs A/B experiment on testset and returns recommendation accuracy of both models.
+    """
     try:
         ab = ExperimentAB()
         K = 5
