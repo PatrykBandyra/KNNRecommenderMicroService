@@ -281,6 +281,8 @@ class TheBestRecommender:
 
 class ExperimentAB:
     filepath = os.path.join(os.path.dirname(__file__), 'all_distances.pk')
+    SEED = 32
+    np.random.seed(SEED)
 
     def __init__(self):
         self.users = pd.read_json("../../data/raw/users.jsonl", lines=True)
@@ -410,10 +412,22 @@ class ExperimentAB:
             recommendations.append(user_content_df['product_id'].iloc[x])
         return recommendations
 
-    def get_accuracy_B(self):
+    def get_accuracy_B_by_user_id(self, users, K):
+        correct = 0
+        for user in users:
+            recommendations = self.get_recommendationB(user, K)
+            for recommendation in recommendations:
+                view = self.testsetB[(self.testsetB['product_id'] == recommendation) &
+                                     (self.testsetB['user_id'] == user)]['user_view']
+                if len(view) != 0:
+                    view = view.item()
+                    if view == 1:
+                        correct = correct + 1
+        return correct / (K * len(self.test_users))
+
+    def get_accuracy_B(self, K):
         correct = 0
         for index, user in self.test_users.iterrows():
-            print(user['user_id'])
             recommendations = self.get_recommendationB(user['user_id'], 5)
             for recommendation in recommendations:
                 view = self.testsetB[(self.testsetB['product_id'] == recommendation) &
@@ -422,7 +436,7 @@ class ExperimentAB:
                     view = view.item()
                     if view == 1:
                         correct = correct + 1
-        correct / (5 * len(self.test_users))
+        return correct / (K * len(self.test_users))
 
     @staticmethod
     def price_bin(price):
@@ -460,10 +474,24 @@ class ExperimentAB:
         else:
             return 5
 
-    def get_accuracy_A(self):
+    def get_accuracy_A_by_user_id(self, users, K):
+        correct = 0
+        for user in users:
+            recommendations = self.get_recommendationA(user, K)
+            for recommendation in recommendations:
+                id = self.products.iloc[recommendation[0]]['product_id']
+                view = self.testsetA[(self.testsetA['product_id'] == id) &
+                                     (self.testsetA['user_id'] == user)]['user_view']
+                if len(view) != 0:
+                    view = view.item()
+                    if view == 1:
+                        correct = correct + 1
+        return correct / (K * len(self.test_users))
+
+    def get_accuracy_A(self, K):
         correct = 0
         for index, user in self.test_users.iterrows():
-            recommendations = self.get_recommendationA(user['user_id'], 5)
+            recommendations = self.get_recommendationA(user['user_id'], K)
             for recommendation in recommendations:
                 id = self.products.iloc[recommendation[0]]['product_id']
                 view = self.testsetA[(self.testsetA['product_id'] == id) &
@@ -472,7 +500,7 @@ class ExperimentAB:
                     view = view.item()
                     if view == 1:
                         correct = correct + 1
-        return correct / (5 * len(self.test_users))
+        return correct / (K * len(self.test_users))
 
     def get_recommendationA(self, user_id, K):
         s = self.trainsetA.index[self.trainsetA['user_id'] == user_id].tolist()
