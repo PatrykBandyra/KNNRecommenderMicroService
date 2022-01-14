@@ -170,9 +170,9 @@ class TheBestRecommender:
         self.group = self.group.rename(columns={0: 'score'})
         self.group['user_view'] = self.group['score'].apply(lambda x: 1 if x > 0 else 0)
 
-        std = MinMaxScaler(feature_range=(0, 1))
-        std.fit(self.group['score'].values.reshape(-1, 1))
-        self.group['interaction_score'] = std.transform(self.group['score'].values.reshape(-1, 1))
+        self.std = MinMaxScaler(feature_range=(0, 1))
+        self.std.fit(self.group['score'].values.reshape(-1, 1))
+        self.group['interaction_score'] = self.std.transform(self.group['score'].values.reshape(-1, 1))
 
         self.group = pd.merge(self.group, self.products, on="product_id", how="left")
         self.group = pd.merge(self.group, self.users, on="user_id", how="left")
@@ -212,7 +212,7 @@ class TheBestRecommender:
         self.content_matrix = self.matrix.dot(self.similarity_matrix)
         self.std = MinMaxScaler(feature_range=(0, 1))
         self.std.fit(self.content_matrix.values)
-        self.content_matrix = std.transform(self.content_matrix.values)
+        self.content_matrix = self.std.transform(self.content_matrix.values)
         self.content_matrix = pd.DataFrame(self.content_matrix, columns=sorted(self.group['product_id'].unique()),
                                            index=sorted(self.group['user_id'].unique()))
 

@@ -66,12 +66,13 @@ def get_best_recommendation(request, user_id):
         data = {}
         for recommendation in recommendations:
             product = best_recommender.products.loc[best_recommender.products['product_id'] == recommendation]
+            print(product)
+            print(type(product))
             data[int(product['product_id'])] = {
-                'product_name': str(product['product_name']),
-                'category_name': str(product['category_name']),
-                'price': float(product['original_price']),
-                'user_rating': float(product['original_user_rating']),
-                'distance': float(product['predicted_interaction'])
+                'product_name': str(product['product_name'].item()),
+                'category_name': str(product['category_path'].item()),
+                'price': float(product['price']),
+                'user_rating': float(product['user_rating']),
             }
 
         return JsonResponse(data)
