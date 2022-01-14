@@ -122,8 +122,19 @@ def get_ab_experiment_by_user_ids(request):
                     'user_rating': float(product['user_rating']),
                 }
 
-
         return JsonResponse(data)
     except IndexError as e:
         print(e)
         return JsonResponse({'Error': 'Invalid user ids!'})
+
+
+@require_GET
+def get_ab_experiment(request):
+    try:
+        ab = ExperimentAB()
+        K = 5
+        data = {'A': ab.get_accuracy_A(K), 'B': ab.get_accuracy_B(K)}
+
+        return JsonResponse(data)
+    except IndexError:
+        return JsonResponse({'Error': 'Invalid user id!'})

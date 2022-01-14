@@ -10,6 +10,7 @@ urlpatterns = [
          name='more_advanced_recommendation'),
     path('recommendations/best/<int:user_id>/', views.get_best_recommendation, name='best_recommendation'),
     path('recommendations/ab/', views.get_ab_experiment_by_user_ids, name='ab_experiment'),
+    path('recommendations/ab/testset/', views.get_ab_experiment, name='ab_experiment_testset'),
 ]
 
 utils.on_server_start()

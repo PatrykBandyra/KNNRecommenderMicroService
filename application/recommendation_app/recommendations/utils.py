@@ -423,12 +423,12 @@ class ExperimentAB:
                     view = view.item()
                     if view == 1:
                         correct = correct + 1
-        return correct / (K * len(self.test_users))
+        return correct / (K * len(users))
 
     def get_accuracy_B(self, K):
         correct = 0
         for index, user in self.test_users.iterrows():
-            recommendations = self.get_recommendationB(user['user_id'], 5)
+            recommendations = self.get_recommendationB(user['user_id'], K)
             for recommendation in recommendations:
                 view = self.testsetB[(self.testsetB['product_id'] == recommendation) &
                                      (self.testsetB['user_id'] == user['user_id'])]['user_view']
@@ -486,7 +486,7 @@ class ExperimentAB:
                     view = view.item()
                     if view == 1:
                         correct = correct + 1
-        return correct / (K * len(self.test_users))
+        return correct / (K * len(users))
 
     def get_accuracy_A(self, K):
         correct = 0
