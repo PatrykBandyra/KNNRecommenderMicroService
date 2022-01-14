@@ -66,8 +66,6 @@ def get_best_recommendation(request, user_id):
         data = {}
         for recommendation in recommendations:
             product = best_recommender.products.loc[best_recommender.products['product_id'] == recommendation]
-            print(product)
-            print(type(product))
             data[int(product['product_id'])] = {
                 'product_name': str(product['product_name'].item()),
                 'category_name': str(product['category_path'].item()),
